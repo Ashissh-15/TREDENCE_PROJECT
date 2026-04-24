@@ -58,9 +58,7 @@ This regularization encourages gates to move toward zero, helping the model auto
 
 ## Example
 
-\[
-\sigma(-2) is approx 0.12
-\]
+sigma(-2) is approx 0.12
 
 This means initializing gates with negative values like -1.5 or -2.0 starts the model with weaker connections, making pruning much more effective.
 
@@ -72,9 +70,7 @@ Multiple experiments were performed using different gate initialization values, 
 
 The pruning threshold used was:
 
-\[
-\text{gate} < 0.01
-\]
+gate < 0.01
 
 Any gate value below this threshold is considered pruned.
 
@@ -95,6 +91,8 @@ Any gate value below this threshold is considered pruned.
 - Sparsity = **52.07%**
 
 This provided the best balance between model accuracy and pruning efficiency.
+
+![alt text](image.png)
 
 ---
 

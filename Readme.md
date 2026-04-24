@@ -8,8 +8,8 @@ Instead of performing pruning after training, this approach allows the network t
 
 The project was implemented using **PyTorch** on the **CIFAR-10 dataset**, and focuses on analyzing the trade-off between:
 
-- Model Accuracy  
-- Network Sparsity  
+- Model Accuracy
+- Network Sparsity
 - Pruning Strength (controlled using λ)
 
 ---
@@ -46,22 +46,20 @@ To encourage pruning, an additional sparsity loss is introduced.
 
 ## Total Loss Function
 
-\[
-L = L_{cls} + \lambda \sum g
-\]
+L=Lcls + λ∑g
 
 Where:
 
-- \(L_{cls}\) = classification loss (CrossEntropyLoss)  
-- \(\lambda\) = sparsity control parameter  
-- \(\sum g\) = total gate activation values
+Lcls = classification loss (CrossEntropyLoss)
+λ = sparsity control parameter
+∑g = total sum of gate values
 
 This regularization encourages gates to move toward zero, helping the model automatically prune unnecessary connections.
 
 ## Example
 
 \[
-\sigma(-2) \approx 0.12
+\sigma(-2) is approx 0.12
 \]
 
 This means initializing gates with negative values like -1.5 or -2.0 starts the model with weaker connections, making pruning much more effective.
@@ -124,9 +122,9 @@ This project successfully implemented a **Self-Pruning Neural Network** using le
 
 The model was able to:
 
-- identify unnecessary connections  
-- prune them automatically during training  
-- maintain strong classification performance  
+- identify unnecessary connections
+- prune them automatically during training
+- maintain strong classification performance
 - significantly reduce network complexity
 
 This confirms that self-pruning is an effective strategy for improving model efficiency without major performance loss.
@@ -135,9 +133,9 @@ This confirms that self-pruning is an effective strategy for improving model eff
 
 # Technologies Used
 
-- Python  
-- PyTorch  
-- NumPy  
-- Matplotlib  
-- Kaggle Notebook  
+- Python
+- PyTorch
+- NumPy
+- Matplotlib
+- Kaggle Notebook
 - CIFAR-10 Dataset

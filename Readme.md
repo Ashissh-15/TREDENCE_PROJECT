@@ -2,16 +2,17 @@
 
 ## Case Study Submission
 
-This project implements a **Self-Pruning Neural Network** using learnable gate mechanisms for automatic weight pruning during training.  
-The objective is to reduce unnecessary network connections while maintaining strong classification performance.
+This project implements a **Self-Pruning Neural Network** using learnable gate mechanisms for automatic weight pruning during training.
+The goal is to reduce unnecessary network connections while maintaining strong classification performance.
 
-Instead of performing pruning after training, this approach allows the model to **learn which connections are important and which can be removed during training itself**.
+Unlike traditional pruning methods that remove weights after training, this approach allows the model to **learn which connections are useful and which should be removed during training itself**.
 
 The project was implemented using **PyTorch** on the **CIFAR-10 dataset** and focuses on the trade-off between:
 
 - Model Accuracy
 - Network Sparsity
 - Pruning Strength (controlled using λ)
+- Gate Learning Rate impact on pruning behavior
 
 ---
 
@@ -49,9 +50,9 @@ Instead of directly using:
 
 W
 
-the network uses:
+The network uses:
 
-W' = W · σ(S)
+**W' = W · σ(S)**
 
 Where:
 
@@ -73,21 +74,17 @@ To encourage pruning, sparsity loss is added.
 
 ## Total Loss Function
 
-L = L_cls + λ ∑g
+**L = Lcls + λ ∑g**
 
 Where:
 
-- L_cls = classification loss (CrossEntropyLoss)
+- Lcls = classification loss (CrossEntropyLoss)
 - λ = sparsity control parameter
 - ∑g = total gate activation values
 
 L1 regularization pushes gate values toward zero, helping the model automatically remove unnecessary connections.
 
-Example:
-
-σ(-2) ≈ 0.12
-
-This is why negative gate initialization (-1.5 or -2.0) improves pruning behavior.
+This improves pruning performance without requiring manual post-training pruning.
 
 ---
 
@@ -104,6 +101,10 @@ Split:
 - Training: 50,000
 - Testing: 10,000
 
+### Sample Dataset Visualization
+
+![alt text](image-4.png)
+
 ---
 
 # Experimental Setup
@@ -112,12 +113,17 @@ Tested Parameters:
 
 ## Learning Rate
 
-0.001
+- 0.001
+
+## Gate Learning Rate
+
+- 0.1
+- 0.01
+- 0.001
 
 ## Gate Initialization
 
-- -1.5
-- -2.0
+- 2.0
 
 ## Lambda Values
 
@@ -132,139 +138,140 @@ Tested Parameters:
 
 Pruning threshold:
 
-gate < 0.01
+**gate < 0.01**
 
 Any gate below this threshold is considered pruned.
 
 ---
 
-# Updated Experimental Results
+# Network Visualization
 
-## Least Aggressive Case
+### Model Architecture Summary
 
-### Configuration
-
-- Learning Rate = 0.001
-- Gate Init = -1.5
-- Lambda = 0.0001
-- Epochs = 5
-
-### Performance
-
-- Accuracy = **74.19%**
-- Sparsity = **0.00%**
-
-![alt text](image-1.png)
-
-### Observation
-
-This configuration prioritizes accuracy with almost no pruning.  
-It represents the weakest pruning behavior and acts as the baseline model.
+![alt text](image-5.png)
 
 ---
 
-## Optimal Balanced Case
+# Experimental Results
+
+## Best Balanced Pruning Case
 
 ### Configuration
 
 - Learning Rate = 0.001
-- Gate Init = -1.5
-- Lambda = 0.0001
-- Epochs = 10
-
-### Performance
-
-- Accuracy = **74.61%**
-- Sparsity = **59.75%**
-
-![alt text](image-2.png)
-
-### Observation
-
-This produced the best practical trade-off between accuracy and pruning.
-
-The model improved accuracy while removing more than half of unnecessary connections, making it the best balanced configuration.
-
----
-
-## Most Aggressive Case
-
-### Configuration
-
-- Learning Rate = 0.001
-- Gate Init = -2.0
+- Gate LR = 0.1
+- Gate Init = 2.0
 - Lambda = 0.01
 - Epochs = 10
 
 ### Performance
 
-- Accuracy = **71.57%**
-- Sparsity = **99.96%**
-
-![alt text](image-3.png)
+- Accuracy = **74.03%**
+- Sparsity = **58.03%**
 
 ### Observation
 
-This produced the highest pruning level.
-
-Nearly the entire network was pruned while still preserving usable classification performance, proving strong over-parameterization in the original network.
+This produced the best balance between accuracy and pruning.
+The model retained strong performance while removing more than half of the network connections.
 
 ---
 
-# Additional Strong Aggressive Case
+## Highest Accuracy Case
 
 ### Configuration
 
 - Learning Rate = 0.001
-- Gate Init = -2.0
-- Lambda = 0.001
+- Gate LR = 0.01
+- Gate Init = 2.0
+- Lambda = 0.0001
 - Epochs = 10
 
 ### Performance
 
-- Accuracy = **74.01%**
-- Sparsity = **99.71%**
+- Accuracy = **75.21%**
+- Sparsity = **0.00%**
+
+![alt text](image-6.png)
 
 ### Observation
 
-This is often the best “practical aggressive” model because it maintains very high accuracy while still achieving extreme sparsity.
+This configuration prioritized prediction performance over pruning.
+It achieved the highest accuracy but almost no sparsity.
+
+---
+
+## Strong Early Pruning Case
+
+### Configuration
+
+- Learning Rate = 0.001
+- Gate LR = 0.1
+- Gate Init = 2.0
+- Lambda = 0.0001
+- Epochs = 5
+
+### Performance
+
+- Accuracy = **75.11%**
+- Sparsity = **11.78%**
+
+![alt text](image-7.png)
+
+### Observation
+
+Even with fewer epochs, the model began pruning effectively when gate learning rate was high.
+This shows the importance of gate learning dynamics.
+
+---
+
+# Accuracy vs Sparsity Trade-Off
+
+![alt text](image-9.png)
+![alt text](image-10.png)
+
+### Observation
+
+As λ increases:
+
+- sparsity increases
+- accuracy slightly decreases
+
+This confirms correct pruning behavior and demonstrates the trade-off between compactness and performance.
 
 ---
 
 # Key Findings
 
-## 1. More Epochs = More Pruning
+## 1. Gate Learning Rate Matters Most
 
-5 epochs often produced near-zero sparsity.
-
-10 epochs allowed gates to move below threshold and produced strong pruning.
+Higher gate learning rate (**0.1**) produced meaningful pruning.
+Lower gate learning rates (**0.01 and 0.001**) resulted in near-zero sparsity.
 
 ---
 
-## 2. Higher λ = Stronger Sparsity
+## 2. More Epochs = More Pruning
+
+5 epochs produced lower sparsity.
+10 epochs allowed gates to move below threshold and increased pruning significantly.
+
+---
+
+## 3. Higher λ = Stronger Sparsity
 
 As λ increased:
 
 - sparsity increased
 - accuracy slightly decreased
 
-This confirms correct pruning behavior.
-
----
-
-## 3. Gate Initialization Matters
-
-More negative initialization improved pruning significantly.
-
-Gate Init = -2.0 consistently produced stronger sparsity than -1.5.
+This confirms effective regularization behavior.
 
 ---
 
 ## 4. Accuracy Was Preserved
 
-Even after extreme pruning (>99%), the model maintained strong accuracy.
+Even with significant pruning, the model maintained strong classification accuracy around 74–75%.
 
-This proves many original connections were redundant.
+This proves many original network connections were redundant.
 
 ---
 
@@ -277,19 +284,27 @@ The model was able to:
 - identify unnecessary connections
 - prune them automatically during training
 - maintain strong classification performance
-- significantly reduce model complexity
+- reduce model complexity without major accuracy loss
 
-### Final Best Balanced Result
+## Final Best Practical Result
 
-- **74.61% Accuracy**
-- **59.75% Sparsity**
+- **74.03% Accuracy**
+- **58.03% Sparsity**
 
-### Final Highest Sparsity Result
+![alt text](image-11.png)
 
-- **99.96% Sparsity**
-- with usable classification performance
+This represents the strongest real trade-off between compression and performance.
 
-This confirms that self-pruning is an effective strategy for building efficient neural networks without major performance loss.
+## Final Highest Accuracy Result
+
+- **75.21% Accuracy**
+- Minimal pruning
+
+![alt text](image-12.png)
+
+This confirms that stronger pruning requires careful tuning of gate learning rate and λ.
+
+Overall, self-pruning is an effective strategy for building efficient neural networks without significant performance degradation.
 
 ---
 
